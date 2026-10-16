@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a1128">
+<title>Цифровая диагностика личности</title>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Slab:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --gold:#7eb8da;
+  --gold-light:#c5d9f0;
+  --gold-dark:#2a4a7a;
+  --maroon-deep:#0a1128;
+  --cream:#e8eef8;
+  --purple-light:#9b7fd4;
+  --blue:#4a7ec7;
+  --blue-light:#7eb8da;
+  --sky:#a8d0f0;
+  --warm-gold:#d4af7a;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+
+html, body {
+  background: var(--maroon-deep);
+  color: var(--cream);
+  font-family: Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+  touch-action: none;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    repeating-conic-gradient(from 0deg at 50% 50%,rgba(126,184,218,.035) 0deg 15deg,transparent 15deg 30deg),
+    radial-gradient(circle at 50% 50%,rgba(74,126,199,.055) 0%,rgba(74,126,199,.025) 30%,transparent 60%);
+}
+
+body::after{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:200px 200px;
+  opacity:.04;
+}
+
+#stage-viewport {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: 1;
+}
+
+#stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.app {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 15vh 14px 25vh;
+}
+
+header{text-align:center;padding:8px 0 24px}
+h1{
+  font-family:'Roboto Slab',Georgia,serif;
+  font-weight:700;font-size:22px;letter-spacing:1.5px;
+  text-transform:uppercase;line-height:1.25;
+}
+h1 .h1-line-1{
+  color:var(--blue-light);
+  text-shadow:0 0 20px rgba(126,184,218,.35),0 1px 0 rgba(255,255,255,.06);
+}
+h1 .h1-line-2{
+  color:var(--gold-light);
+  text-shadow:0 0 20px rgba(197,217,240,.35),0 1px 0 rgba(255,255,255,.06);
+}
+
+.form-card,
+.extra-block,
+.matrix-wrap,
+.section{
+  position:relative;
+  border:1px solid var(--gold-dark);
+  border-radius:14px;
+  box-shadow:0 1px 2px rgba(0,0,0,.45),0 10px 30px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.08);
+}
+.form-card::before,
+.extra-block::before,
+.matrix-wrap::before,
+.section::before{
+  content:'';position:absolute;top:5px;right:5px;bottom:5px;left:5px;
+  border:1px solid rgba(126,184,218,.18);border-radius:9px;
+  pointer-events:none;z-index:0;
+}
+
+.form-card{
+  background:linear-gradient(145deg,rgba(26,42,94,.9),rgba(10,17,40,.95));
+  padding:22px 18px;
+  margin-bottom:16px;
+}
+.form-card label{
+  display:block;font-family:'Roboto Slab',serif;font-weight:600;font-size:12px;
+  letter-spacing:1.5px;text-transform:uppercase;color:var(--blue-light);margin-bottom:8px;
+  position:relative;z-index:1;
+}
+.form-card input{
+  position:relative;z-index:1;
+  width:100%;background:rgba(0,0,0,.35);
+  border:1px solid rgba(126,184,218,.35);border-radius:8px;
+  padding:12px 14px;color:var(--cream);font-family:'Roboto Slab',serif;
+  font-size:20px;font-weight:700;letter-spacing:2px;text-align:center;
+  margin-bottom:16px;outline:none;
+  transition:background .25s ease-out,border-color .25s ease-out,box-shadow .25s ease-out,color .25s ease-out;
+  -webkit-appearance:none;appearance:none;
+}
+.form-card input::placeholder{color:rgba(197,217,240,.35);letter-spacing:2px;font-weight:400}
+.form-card input:focus{
+  border-color:var(--gold-light);
+  box-shadow:0 0 0 3px rgba(126,184,218,.16),0 0 22px rgba(126,184,218,.35),inset 0 1px 0 rgba(255,255,255,.08);
+  background:rgba(0,0,0,.45);
+}
+
+.btn{
+  position:relative;z-index:1;
+  display:flex;align-items:center;justify-content:center;
+  width:100%;height:44px;padding:0 14px;
+  background:linear-gradient(135deg,#2a4a7a,#4a7ec7);
+  color:#fff;border:1px solid var(--blue-light);border-radius:8px;
+  font-family:'Roboto Slab',serif;font-weight:600;font-size:14px;
+  text-transform:uppercase;letter-spacing:2px;
+  cursor:pointer;
+  box-shadow:0 0 12px rgba(126,184,218,.45),inset 0 1px 0 rgba(255,255,255,.15);
+  transition:filter .25s ease-out,transform .15s ease-out;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.7;cursor:default;pointer-events:none}
+
+/* ——— Reveal (opacity) для блоков ——— */
+.hidden-block{
+  opacity: 0;
+  transition: opacity 1.2s ease-out;
+}
+.hidden-block.visible{ opacity: 1 }
+
+@keyframes twinkle{
+  0%,100%{opacity:.2;transform:scale(.8)}
+  50%{opacity:1;transform:scale(1.15)}
+}
+
+@keyframes cellGlowSmooth{
+  0%{
+    box-shadow:0 0 0 rgba(126,184,218,0), inset 0 0 0 rgba(126,184,218,0);
+    border-color:rgba(126,184,218,.2);
+    background:rgba(0,0,0,.3);
+  }
+  30%{
+    box-shadow:0 0 24px rgba(126,184,218,.6), inset 0 0 14px rgba(126,184,218,.14);
+    border-color:rgba(126,184,218,.95);
+    background:rgba(126,184,218,.08);
+  }
+  65%{
+    box-shadow:0 0 12px rgba(126,184,218,.3), inset 0 0 6px rgba(126,184,218,.06);
+    border-color:rgba(126,184,218,.5);
+    background:rgba(0,0,0,.32);
+  }
+  100%{
+    box-shadow:0 0 0 rgba(126,184,218,0), inset 0 0 0 rgba(126,184,218,0);
+    border-color:rgba(126,184,218,.2);
+    background:rgba(0,0,0,.3);
+  }
+}
+.pop-glow{animation:cellGlowSmooth 1.4s ease-out}
+
+.extra-block{
+  background:linear-gradient(145deg,rgba(26,42,94,.9),rgba(10,17,40,.95));
+  padding:16px 14px;margin-bottom:16px;text-align:center;
+}
+.extra-block .digits{
+  position:relative;z-index:1;
+  display:block;line-height:1.3;
+  font-family:'Roboto Slab',serif;font-weight:700;font-size:20px;
+  color:var(--sky);letter-spacing:2px;
+  text-shadow:0 0 10px rgba(126,184,218,.4);
+  word-break:break-all;
+  min-height:26px;
+}
+.extra-block .label{
+  position:relative;z-index:1;
+  display:block;margin-top:4px;
+  font-family:Roboto,sans-serif;font-weight:500;font-size:10px;
+  letter-spacing:.5px;text-transform:uppercase;color:var(--blue-light);
+}
+.extra-block::after{
+  content:'✦';position:absolute;top:11px;right:14px;
+  font-size:11px;line-height:1;pointer-events:none;
+  color:var(--warm-gold);
+  text-shadow:0 0 8px rgba(212,175,122,.75),0 0 16px rgba(212,175,122,.4);
+  animation:twinkle 3.6s ease-in-out infinite 0s;
+}
+.extra-block .digits::before{
+  content:'✧';position:absolute;top:2px;left:0;
+  font-size:9px;line-height:1;pointer-events:none;
+  color:var(--warm-gold);
+  text-shadow:0 0 8px rgba(212,175,122,.75),0 0 16px rgba(212,175,122,.4);
+  animation:twinkle 4.2s ease-in-out infinite .6s;
+}
+.extra-block .digits::after{
+  content:'✦';position:absolute;bottom:-4px;right:0;
+  font-size:8px;line-height:1;pointer-events:none;
+  color:var(--warm-gold);
+  text-shadow:0 0 8px rgba(212,175,122,.75),0 0 16px rgba(212,175,122,.4);
+  animation:twinkle 4.8s ease-in-out infinite 1.2s;
+}
+
+.matrix-wrap{
+  background:linear-gradient(145deg,rgba(26,42,94,.9),rgba(10,17,40,.95));
+  padding:12px 10px;
+  margin-bottom:16px;
+}
+.matrix{
+  position:relative;z-index:1;
+  table-layout:fixed;
+  border-collapse:separate;
+  border-spacing:5px;
+  width:100%;
+  background:transparent;
+}
+.matrix td{
+  width:33.333%;
+  height:66px;
+  border:1px solid rgba(126,184,218,.2);
+  padding:8px 4px;
+  text-align:center;
+  vertical-align:middle;
+  background:rgba(0,0,0,.3);
+  border-radius:6px;
+  overflow:hidden;
+}
+.matrix td.empty{background:rgba(0,0,0,.15);border-color:rgba(126,184,218,.1)}
+.matrix .digit{
+  font-family:'Roboto Slab',serif;font-size:20px;font-weight:700;
+  color:var(--sky);
+  display:block;
+  height:26px;line-height:26px;
+  letter-spacing:2px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  text-shadow:0 0 10px rgba(126,184,218,.4);
+}
+.matrix .label{
+  font-family:Roboto,sans-serif;font-size:10px;font-weight:500;
+  color:var(--blue-light);display:block;margin-top:4px;
+  height:12px;line-height:12px;
+  letter-spacing:.5px;text-transform:uppercase;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.matrix td.empty .digit{color:rgba(126,184,218,.25);text-shadow:none}
+
+.section{
+  background:linear-gradient(160deg,rgba(26,42,94,.85),rgba(10,17,40,.9));
+  margin-bottom:16px;overflow:hidden;
+  box-shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.05);
+}
+.section-header{
+  position:relative;z-index:1;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px 18px;
+  background:linear-gradient(90deg,rgba(126,184,218,.12),transparent);
+  border-bottom:1px solid rgba(126,184,218,.2);
+  user-select:none;
+}
+.section-header h2{
+  display:flex;align-items:center;gap:8px;
+  font-family:'Roboto Slab',serif;font-weight:600;font-size:14px;
+  text-transform:uppercase;letter-spacing:1px;color:var(--gold-light);
+  text-shadow:0 0 12px rgba(197,217,240,.15);
+  line-height:1.35;
+}
+.section-body{position:relative;z-index:1}
+.section-inner{padding:16px 18px 20px}
+.section-inner p{
+  font-family:Roboto,sans-serif;font-weight:400;font-size:15px;
+  line-height:1.75;color:var(--cream);margin-bottom:14px;
+  word-wrap:break-word;
+  overflow-wrap:break-word;
+}
+.section-inner p:last-child{margin-bottom:0}
+.section-inner strong{
+  font-family:Roboto,sans-serif;font-weight:500;color:var(--gold-light);
+  text-decoration:underline;
+  text-underline-offset:2px;
+  text-decoration-thickness:1px;
+}
+.desc-block{
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px solid rgba(126,184,218,.2);
+}
+
+@media (max-width:400px){
+  h1{font-size:19px}
+  .extra-block .digits{font-size:18px}
+  .form-card input{font-size:18px}
+  .matrix td{height:60px;padding:6px 3px}
+  .matrix .digit{font-size:18px;height:24px;line-height:24px}
+  .matrix .label{font-size:9px}
+  .section-header h2{font-size:13px}
+  .section-header{padding:12px 14px}
+  .section-inner{padding:14px 14px 18px}
+  .section-inner p{font-size:14px}
+  .btn{font-size:14px}
+}
+@media (max-width:340px){
+  h1{font-size:17px}
+  .form-card input{font-size:16px;letter-spacing:1.5px}
+  .extra-block .digits{font-size:16px}
+  .matrix td{height:56px;padding:5px 2px}
+  .matrix .digit{font-size:16px;height:22px;line-height:22px}
+  .matrix .label{font-size:8.5px}
+  .section-inner p{font-size:13.5px}
+}
+</style>
+</head>
+<body>
+
+<div id="stage-viewport">
+  <div id="stage">
+    <div class="app">
+      <header>
+        <h1>
+          <span class="h1-line-1">Цифровая</span><br>
+          <span class="h1-line-2">диагностика личности</span>
+        </h1>
+      </header>
+
+      <div class="form-card">
+        <label for="c-date">Дата рождения</label>
+        <input type="text" id="c-date" placeholder="ДД.ММ.ГГГГ" value="14.06.1992" maxlength="10" inputmode="numeric" autocomplete="off">
+        <button class="btn" id="c-calc-btn" type="button">Рассчитать</button>
+      </div>
+
+      <div class="extra-block hidden-block" id="c-extra-block">
+        <div class="digits" id="c-extra-digits"></div>
+        <div class="label">Дополнительные числа</div>
+      </div>
+
+      <div class="matrix-wrap hidden-block" id="c-matrix-wrap">
+        <table class="matrix">
+          <tr>
+            <td id="c-1"><span class="digit"></span><span class="label">Характер</span></td>
+            <td id="c-4"><span class="digit"></span><span class="label">Здоровье</span></td>
+            <td id="c-7"><span class="digit"></span><span class="label">Удача</span></td>
+          </tr>
+          <tr>
+            <td id="c-2"><span class="digit"></span><span class="label">Энергия</span></td>
+            <td id="c-5"><span class="digit"></span><span class="label">Логика</span></td>
+            <td id="c-8"><span class="digit"></span><span class="label">Долг</span></td>
+          </tr>
+          <tr>
+            <td id="c-3"><span class="digit"></span><span class="label">Интерес</span></td>
+            <td id="c-6"><span class="digit"></span><span class="label">Труд</span></td>
+            <td id="c-9"><span class="digit"></span><span class="label">Память</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="section hidden-block" id="c-ones-block">
+        <div class="section-header">
+          <h2 id="c-ones-digits">Характер</h2>
+        </div>
+        <div class="section-body">
+          <div class="section-inner" id="c-ones-text"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var tg = window.Telegram && window.Telegram.WebApp;
+  if (!tg) return;
+  try {
+    tg.ready();
+    tg.expand();
+    if (tg.setHeaderColor) tg.setHeaderColor('#0a1128');
+    if (tg.setBackgroundColor) tg.setBackgroundColor('#0a1128');
+    if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
+  } catch (e) {}
+})();
+
+(function() {
+  "use strict";
+
+  var ONES_IMPORTANT = 'Характер это самая гибкая часть психоматрицы. Он меняется под влиянием обстоятельств, окружения и вашего собственного выбора. Восьмёрки в матрице придают характеру существенную пластичность. Перед вами не застывший портрет, а живой человек, способный меняться.';
+
+  var onesData = {
+    1: {
+      short: 'Противоречивое сочетание внутренней неуверенности и внешнего желания казаться волевым человеком. Внутри часто бывает страшно принимать решения, поэтому ответственность хочется переложить на других. Но чтобы скрыть эту хрупкость, человек надевает маску уверенности, может горячо спорить даже в тех вопросах, где не компетентен, или повторять одни и те же истории для поддержания своего статуса. Это защитный механизм психики, который помогает выживать и встраиваться в социум.',
+      plus: 'Внутреннее стремление к росту, способность встраиваться в коллектив, умение находить поддержку извне.',
+      minus: 'Избегание окончательных решений, спор ради спора, противоречие между желанием казаться сильным и реальной усталостью от давления.',
+      rec: 'Признайте своё право на уязвимость – вам не нужно всегда казаться железным. Ищите опору в надёжной структуре, в команде или рядом с мудрыми людьми. Ставьте маленькие, реальные цели, чтобы через их достижение обрести подлинную уверенность. Не тратьте силы на пустые споры – берегите энергию для реальных дел.'
+    },
+    2: {
+      short: 'Мягкий и уступчивый характер. Человек очень любит похвалу и готов зарабатывать её добрыми делами, помощью и умением слушать. Он легко входит в любую компанию, не давит на окружающих и старается избегать конфликтов. Из-за этого иногда может занижать свои цели или уступать там, где стоило бы проявить твёрдость. Однако при наличии в расчёте сильных пятёрок или восьмёрок такие люди становятся непримиримыми правдоискателями и совершенно не терпят лжи.',
+      plus: 'Отзывчивость, коммуникабельность, эмпатия, умение слушать и поддерживать других.',
+      minus: 'Зависимость от чужой похвалы, заниженная самооценка, боязнь конфликтов, нетвёрдость в отстаивании границ.',
+      rec: 'Учитесь хвалить себя самостоятельно, не дожидаясь одобрения со стороны. Похвала для вас – это жизненное топливо, поэтому окружайте себя людьми, которые умеют ценить ваши старания. Тренируйтесь отстаивать свою точку зрения мягко, но уверенно. Ставьте цели чуть выше, чем кажется комфортным – у вас достаточно сил для их достижения.'
+    },
+    3: {
+      short: '«Золотая середина» в проявлении воли. Человек умеет находить общий язык почти с кем угодно: он гибок, дипломатичен и в спокойном состоянии добр, терпим и безотказен в помощи. Но главная особенность этого характера – спонтанность. В критический момент, когда ситуация того требует, человек способен на неожиданный и очень мощный волевой поступок, которого от него никто не ждёт. Эта внутренняя сила дремлет до поры до времени, но всегда готова включиться.',
+      plus: 'Коммуникабельность, адаптивность, природная доброта, способность к внезапному и точному волевому рывку.',
+      minus: 'Непредсказуемость реакций, периоды безвольности, сменяющиеся вспышками активности.',
+      rec: 'Примите свою волнообразную природу: периоды спокойной уступчивости сменяются моментами высокой концентрации и силы. Это нормально. Не корите себя за периоды мягкости – в это время вы накапливаете ресурс. Используйте свой дар дипломатии для выстраивания крепких связей, но в критические моменты смело опирайтесь на свою скрытую решительность.'
+    },
+    4: {
+      short: 'Сильная целеустремлённость и лидерское начало. Человек принимает решения быстро и редко от них отказывается. Он ставит перед собой цель и лишь потом начинает соизмерять её со своими возможностями. У него собственное, очень мощное волевое начало, которое не позволяет быть проводником чужой воли. При всей своей внутренней твёрдости и решительности, эти люди обычно очень аккуратны и тактичны в повседневном общении с окружающими.',
+      plus: 'Сила воли, решительность, лидерство, способность вести за собой, тактичность.',
+      minus: 'Риск достижения навязанных извне целей, нежелание соизмерять силы до старта, неприятие любого давления.',
+      rec: 'Перед тем как броситься на амбразуру, остановитесь и честно спросите себя: это действительно моя цель или кто-то навязал её мне? Выбрав истинное направление, не занижайте планку – идите до конца. Помните, что на вас нельзя давить, и вы это знаете. Используйте свою силу для защиты своих границ и помощи тем, кто слабее, но избегайте жёсткости там, где достаточно простого разговора.'
+    },
+    5: {
+      short: 'Максимальная сила характера, которая в крайних проявлениях может перерастать в деспотизм. Человек не терпит подчинения и всегда продавливает свою волю. В моменты раздражения может быть жёстким и даже опасным для оппонентов. Однако, если в расчёте есть восьмёрки, в спокойном состоянии такой человек способен на невероятную мягкость, терпимость, доброту и великодушие. Это личность крайностей: либо безграничная щедрость, либо железный кулак.',
+      plus: 'Колоссальная воля, харизма, масштабность личности, способность вести за собой массы.',
+      minus: 'Склонность к подавлению окружающих, взрывоопасность, нетерпимость к чужой слабости.',
+      rec: 'Главная мудрость для вас – помнить, что рядом находятся живые люди со своими слабостями. Избегайте прямой власти над другими – это путь к внутренним потерям. Направляйте свою колоссальную энергию в науку, искусство, бизнес или мастерство, где нужно проявлять власть над обстоятельствами и материалом, а не над людьми. Учитесь сдержанности – это признак истинной силы.'
+    },
+    6: {
+      short: 'Перегрузка характером. Человек живёт исключительно по своим внутренним законам. Чужие правила и авторитеты для него просто не существуют, хотя он может уважать право других на их наличие. Максимальная активизация этой перегрузки сильно травмирует самого человека, поскольку вынуждает его разрушать собственный, невидимый для окружающих мир. Люди с таким количеством единиц очень страдают от своей перегрузки и плохо переносят рядом с собой других лидеров и властных людей.',
+      plus: 'Абсолютная самодостаточность, внутренняя автономность, полная независимость от чужого мнения.',
+      minus: 'Внутреннее страдание от перегрузки, разрушение собственного мира при внешнем давлении, неприятие любых рамок.',
+      rec: 'Будьте с собой максимально деликатны. Не ставьте перед собой сразу несколько глобальных целей – выберите одну, иначе перегрузка затормозит любое движение вперёд. Избегайте окружения, где вам пытаются навязать жёсткие рамки или где много других властных людей. Ищите выход своей колоссальной энергии через физическое действие, творчество или уединённую работу, чтобы не разрушать себя изнутри.'
+    }
+  };
+
+  var onesZeroData = {
+    short: 'От природы волевой стержень не выражен. Человеку комфортнее, когда рядом есть тот, кто берёт на себя ответственность, направляет и принимает решения. Это не слабость, а природная предрасположенность быть надёжным исполнителем и помощником. Такой человек не стремится к лидерству, ему важно найти своё место в структуре или рядом с сильным наставником, где его мягкость и готовность следовать будут цениться.',
+    plus: 'Гибкость, отсутствие конфликтности, умение слушать, способность быть надёжной опорой для лидера.',
+    minus: 'Трудности с самостоятельным принятием решений, избегание ответственности, зависимость от чужого мнения.',
+    rec: 'Не требуйте от себя немедленной железной воли. Найдите среду, коллектив или наставника, на которых можно опереться. Развивайте характер постепенно: ставьте перед собой небольшие, достижимые цели и обязательно хвалите себя за их выполнение. Воля – это мышца, её можно натренировать шаг за шагом.'
+  };
+
+  /* ============================================================
+     РАСЧЁТ
+     ============================================================ */
+  function sumDigits(n) {
+    if (n === undefined || n === null) return 0;
+    var s = String(Math.abs(n));
+    var t = 0;
+    for (var i = 0; i < s.length; i++) t += parseInt(s.charAt(i), 10);
+    return t;
+  }
+  function getFirstDigit(s) {
+    if (!s) return 0;
+    return parseInt(s.charAt(0), 10);
+  }
+  function parseDate(str) {
+    var clean = str.replace(/[^0-9]/g, '');
+    if (clean.length !== 8) return null;
+    var day = parseInt(clean.substring(0, 2), 10);
+    var month = parseInt(clean.substring(2, 4), 10);
+    var year = parseInt(clean.substring(4, 8), 10);
+    if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+    if (day < 1 || day > 31) return null;
+    if (month < 1 || month > 12) return null;
+    return { day: day, month: month, year: year };
+  }
+  function calcNumbers(d, m, y) {
+    var sum = sumDigits(d) + sumDigits(m) + sumDigits(y);
+    var first = sum;
+    var second = sumDigits(first);
+    var ds = String(d) + String(m) + String(y);
+    var fd = getFirstDigit(ds);
+    var third = first - 2 * fd;
+    var fourth = sumDigits(third);
+    return { first: first, second: second, third: third, fourth: fourth };
+  }
+  function getCounts(d, m, y, extra) {
+    var c = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
+    function add(n) {
+      if (n === undefined || n === null || isNaN(n)) return;
+      var s = String(Math.abs(n));
+      for (var i = 0; i < s.length; i++) {
+        var dig = parseInt(s.charAt(i), 10);
+        if (!isNaN(dig)) c[dig] = (c[dig] || 0) + 1;
+      }
+    }
+    add(d); add(m); add(y);
+    add(extra.first); add(extra.second); add(extra.third); add(extra.fourth);
+    return c;
+  }
+  function renderCount(c, digit) {
+    var v = c[digit] || 0;
+    return v === 0 ? '—' : String(digit).repeat(v);
+  }
+  function getOnesData(count) {
+    if (count <= 0) return onesZeroData;
+    if (count >= 6) return onesData[6];
+    return onesData[count];
+  }
+  function onesTitle(count) {
+    if (count <= 0) return 'Характер «1-нет»';
+    if (count >= 6) return 'Характер «111111 и более»';
+    return 'Характер «' + new Array(count + 1).join('1') + '»';
+  }
+
+  /* ============================================================
+     STAGE / КАМЕРА
+     ============================================================ */
+  var STAGE = document.getElementById('stage');
+  var VIEWPORT = document.getElementById('stage-viewport');
+
+  function getVH() {
+    return VIEWPORT.clientHeight || window.innerHeight || 800;
+  }
+  function getStageY() {
+    var tr = window.getComputedStyle(STAGE).transform;
+    if (!tr || tr === 'none') return 0;
+    try { return (new DOMMatrix(tr)).m42 || 0; }
+    catch (e) {
+      var m = tr.match(/matrix.*\((.+)\)/);
+      if (m) return parseFloat(m[1].split(',')[5]) || 0;
+    }
+    return 0;
+  }
+  function setStageY(y, duration) {
+    if (duration > 0) {
+      STAGE.style.transition = 'transform ' + duration + 'ms cubic-bezier(0.65, 0, 0.35, 1)';
+    } else {
+      STAGE.style.transition = 'none';
+    }
+    STAGE.style.transform = 'translate3d(0,' + Math.round(y) + 'px,0)';
+  }
+  function moveCameraTo(y, duration) {
+    duration = (duration === undefined) ? 1200 : duration;
+    return new Promise(function(resolve) {
+      setStageY(y, duration);
+      setTimeout(resolve, duration);
+    });
+  }
+
+  /* ============================================================
+     УТИЛИТЫ
+     ============================================================ */
+  function sleep(ms) {
+    return new Promise(function(r) { setTimeout(r, ms); });
+  }
+
+  /* ============================================================
+     ПЕЧАТЬ ДАТЫ
+     ============================================================ */
+  function typeDate(value, charDelay) {
+    return new Promise(function(resolve) {
+      var inp = document.getElementById('c-date');
+      if (!inp) { resolve(); return; }
+      inp.value = '';
+      var i = 0;
+      function step() {
+        if (i < value.length) {
+          inp.value += value.charAt(i);
+          i++;
+          setTimeout(step, charDelay);
+        } else resolve();
+      }
+      step();
+    });
+  }
+
+  /* ============================================================
+     ПЕЧАТЬ ДОП. ЧИСЕЛ
+     ============================================================ */
+  function typeExtraNumbers(text, charDelay) {
+    return new Promise(function(resolve) {
+      var el = document.getElementById('c-extra-digits');
+      if (!el) { resolve(); return; }
+      el.textContent = '';
+      var i = 0;
+      function step() {
+        if (i < text.length) {
+          el.textContent += text.charAt(i);
+          i++;
+          setTimeout(step, charDelay);
+        } else resolve();
+      }
+      step();
+    });
+  }
+
+  /* ============================================================
+     ПЕЧАТЬ ЯЧЕЙКИ МАТРИЦЫ
+     ============================================================ */
+  function typeMatrixCell(cellId, totalDuration) {
+    return new Promise(function(resolve) {
+      var cell = document.getElementById(cellId);
+      if (!cell) { resolve(); return; }
+      var digitEl = cell.querySelector('.digit');
+      if (!digitEl) { resolve(); return; }
+
+      var target = digitEl.getAttribute('data-target') || '—';
+      digitEl.textContent = '';
+
+      cell.classList.remove('pop-glow');
+      void cell.offsetWidth;
+      cell.classList.add('pop-glow');
+
+      if (target === '—') {
+        setTimeout(function() {
+          digitEl.textContent = '—';
+          resolve();
+        }, totalDuration * 0.55);
+        return;
+      }
+
+      var chars = target.split('');
+      var charDelay = totalDuration / chars.length;
+      var i = 0;
+      function step() {
+        if (i < chars.length) {
+          digitEl.textContent += chars[i];
+          i++;
+          setTimeout(step, charDelay);
+        } else resolve();
+      }
+      step();
+    });
+  }
+
+  /* ============================================================
+     ХАРАКТЕР: построение структуры с пустыми text-нодами
+     Каждая часть текста — отдельный text node.
+     Никаких предзаполненных span'ов. Блок вырастает по мере печати.
+     ============================================================ */
+  function makeTypedParagraph(parent, parts) {
+    var p = document.createElement('p');
+    parent.appendChild(p);
+    var nodes = [];
+    parts.forEach(function(part) {
+      var wrapper = p;
+      if (part.strong) {
+        var s = document.createElement('strong');
+        p.appendChild(s);
+        wrapper = s;
+      }
+      var tn = document.createTextNode('');
+      wrapper.appendChild(tn);
+      nodes.push({ tn: tn, text: part.text });
+    });
+    return nodes;
+  }
+
+  function buildCharacterStructure(data, important) {
+    var container = document.getElementById('c-ones-text');
+    container.innerHTML = '';
+
+    var structure = [];
+
+    /* Короткий абзац */
+    var p1Nodes = makeTypedParagraph(container, [
+      { text: data.short, strong: false }
+    ]);
+    structure.push(p1Nodes);
+
+    /* Разделитель */
+    var db = document.createElement('div');
+    db.className = 'desc-block';
+    container.appendChild(db);
+
+    /* Преимущества */
+    structure.push(makeTypedParagraph(db, [
+      { text: 'Преимущества:', strong: true },
+      { text: ' ' + data.plus, strong: false }
+    ]));
+
+    /* Недостатки */
+    structure.push(makeTypedParagraph(db, [
+      { text: 'Возможные недостатки:', strong: true },
+      { text: ' ' + data.minus, strong: false }
+    ]));
+
+    /* Рекомендации */
+    structure.push(makeTypedParagraph(db, [
+      { text: 'Рекомендации:', strong: true },
+      { text: ' ' + data.rec, strong: false }
+    ]));
+
+    /* Важно */
+    structure.push(makeTypedParagraph(db, [
+      { text: 'Важно:', strong: true },
+      { text: ' ' + important, strong: false }
+    ]));
+
+    return structure;
+  }
+
+  /* ============================================================
+     ПЕЧАТЬ ХАРАКТЕРА + FOLLOW-КАМЕРА
+     Блок растёт снизу, камера следует за нижней границей
+     ============================================================ */
+  function typeCharacterWithFollow(structure, totalDuration) {
+    return new Promise(function(resolve) {
+      var section = document.getElementById('c-ones-block');
+      if (!section) { resolve(); return; }
+
+      /* Плоский список символов в очередь */
+      var queue = [];
+      structure.forEach(function(nodeParts) {
+        nodeParts.forEach(function(np) {
+          for (var i = 0; i < np.text.length; i++) {
+            queue.push({ tn: np.tn, ch: np.text.charAt(i) });
+          }
+        });
+      });
+
+      var total = queue.length;
+      if (!total) { resolve(); return; }
+
+      var vh = getVH();
+
+      /* Стартовое положение камеры — центрируем хедер */
+      STAGE.style.transition = 'none';
+
+      var currentY = getStageY();
+      var startTime = performance.now();
+      var idx = 0;
+
+      function computeTargetY() {
+        var r = section.getBoundingClientRect();
+        var sectionTop = r.top - currentY;
+        var sectionBottom = r.bottom - currentY;
+
+        /* Верх секции — не ниже 30% экрана */
+        var topTarget = vh * 0.30 - sectionTop;
+        /* Низ секции — не ниже 80% экрана */
+        var bottomTarget = vh * 0.80 - sectionBottom;
+
+        /* Берём более отрицательное: сначала держим верх, потом гонимся за низом */
+        return Math.min(topTarget, bottomTarget);
+      }
+
+      function frame(now) {
+        var elapsed = now - startTime;
+        var progress = Math.min(elapsed / totalDuration, 1);
+        var targetIdx = Math.floor(progress * total);
+
+        /* Печатаем новые символы */
+        while (idx < targetIdx) {
+          queue[idx].tn.appendData(queue[idx].ch);
+          idx++;
+        }
+
+        /* Плавно ведём камеру */
+        var ty = computeTargetY();
+        currentY += (ty - currentY) * 0.14;
+        STAGE.style.transform = 'translate3d(0,' + Math.round(currentY) + 'px,0)';
+
+        if (progress < 1) {
+          requestAnimationFrame(frame);
+        } else {
+          /* Допечатываем остаток */
+          while (idx < total) {
+            queue[idx].tn.appendData(queue[idx].ch);
+            idx++;
+          }
+          /* Финальный догон камеры */
+          var finalTarget = computeTargetY();
+          var settleStart = performance.now();
+          var fromY = currentY;
+          function settle(now2) {
+            var t2 = Math.min((now2 - settleStart) / 600, 1);
+            var eased = 1 - Math.pow(1 - t2, 3);
+            var y2 = fromY + (finalTarget - fromY) * eased;
+            STAGE.style.transform = 'translate3d(0,' + Math.round(y2) + 'px,0)';
+            if (t2 < 1) requestAnimationFrame(settle);
+            else {
+              STAGE.style.transition = '';
+              resolve();
+            }
+          }
+          requestAnimationFrame(settle);
+        }
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
+  /* ============================================================
+     ОСНОВНОЙ СЦЕНАРИЙ
+     ============================================================ */
+  var animationRunning = false;
+  var initialized = false;
+  var initialY = 0;
+
+  function setInitialPosition() {
+    var formCard = document.querySelector('.form-card');
+    if (!formCard) return;
+    STAGE.style.transition = 'none';
+    STAGE.style.transform = 'translate3d(0,0,0)';
+    void STAGE.offsetHeight;
+    var vh = getVH();
+    var r = formCard.getBoundingClientRect();
+    var formCenter = r.top + r.height / 2;
+    initialY = -(formCenter - vh / 2);
+    setStageY(initialY, 0);
+    initialized = true;
+  }
+
+  async function calculate() {
+    if (animationRunning) return;
+    if (!initialized) setInitialPosition();
+
+    var inp = document.getElementById('c-date');
+    var calcBtn = document.getElementById('c-calc-btn');
+    if (!inp) return;
+
+    var ds = inp.value.trim();
+    var parsed = parseDate(ds);
+    if (!parsed) {
+      alert('Введите дату в формате ДД.ММ.ГГГГ (например, 15.04.1972)');
+      return;
+    }
+
+    animationRunning = true;
+    if (calcBtn) calcBtn.disabled = true;
+    inp.readOnly = true;
+
+    /* Сброс */
+    var hidden = document.querySelectorAll('.hidden-block');
+    for (var h = 0; h < hidden.length; h++) hidden[h].classList.remove('visible');
+
+    var textContainer = document.getElementById('c-ones-text');
+    if (textContainer) textContainer.innerHTML = '';
+
+    var extraEl = document.getElementById('c-extra-digits');
+    if (extraEl) extraEl.textContent = '';
+
+    for (var ci = 1; ci <= 9; ci++) {
+      var cell = document.getElementById('c-' + ci);
+      if (!cell) continue;
+      var dEl = cell.querySelector('.digit');
+      if (dEl) {
+        dEl.textContent = '';
+        dEl.removeAttribute('data-target');
+      }
+      cell.classList.remove('pop-glow', 'empty');
+    }
+
+    /* ====== Расчёт ====== */
+    var d = parsed.day, m = parsed.month, y = parsed.year;
+    var extra = calcNumbers(d, m, y);
+    var cnt = getCounts(d, m, y, extra);
+
+    var absThird = Math.abs(extra.third);
+    var absFourth = Math.abs(extra.fourth);
+    var extraStr = extra.first + ' · ' + extra.second + ' · ' + absThird + ' · ' + absFourth;
+
+    for (var k = 1; k <= 9; k++) {
+      var cellK = document.getElementById('c-' + k);
+      if (!cellK) continue;
+      var disp = renderCount(cnt, k);
+      var dElK = cellK.querySelector('.digit');
+      if (dElK) dElK.setAttribute('data-target', disp);
+      if (disp === '—') cellK.classList.add('empty');
+      else cellK.classList.remove('empty');
+    }
+
+    var onesCount = cnt[1] || 0;
+    var header = document.getElementById('c-ones-digits');
+    if (header) header.textContent = onesTitle(onesCount);
+    var structure = buildCharacterStructure(getOnesData(onesCount), ONES_IMPORTANT);
+
+    /* ====== Возврат камеры в старт ====== */
+    STAGE.style.transition = 'none';
+    STAGE.style.transform = 'translate3d(0,' + initialY + 'px,0)';
+    void STAGE.offsetHeight;
+
+    /* ====== Замер целевых позиций ====== */
+    var vh = getVH();
+    var extraBlock = document.getElementById('c-extra-block');
+    var matrixWrap = document.getElementById('c-matrix-wrap');
+    var onesBlock = document.getElementById('c-ones-block');
+
+    function centerOf(el) {
+      var r = el.getBoundingClientRect();
+      return -(r.top + r.height / 2 - vh / 2);
+    }
+
+    var extraTargetY = centerOf(extraBlock);
+    var matrixTargetY = centerOf(matrixWrap);
+
+    /* ============================================================
+       ТАЙМЛАЙН — РОВНО 50 СЕКУНД
+       0.0–1.5   печать даты
+       1.5–3.0   камера к доп. числам
+       3.0–4.0   печать доп. чисел
+       4.0–5.5   камера к матрице
+       5.5–14.0  печать 9 ячеек
+       14.0–15.5 камера к характеру
+       15.5–48.5 печать характера + follow (33s)
+       48.5–50.0 финальная пауза
+       ============================================================ */
+
+    /* 1. Дата — 1.5 сек */
+    await typeDate(ds, Math.round(1500 / Math.max(ds.length, 1)));
+
+    /* 2. Доп. числа: показ + камера параллельно — 1.5 сек */
+    extraBlock.classList.add('visible');
+    var movePromise = moveCameraTo(extraTargetY, 1500);
+    await movePromise;
+
+    /* 3. Печать доп. чисел — 1.0 сек */
+    await typeExtraNumbers(extraStr, Math.round(1000 / Math.max(extraStr.length, 1)));
+
+    /* 4. Матрица: показ + камера параллельно — 1.5 сек */
+    matrixWrap.classList.add('visible');
+    await moveCameraTo(matrixTargetY, 1500);
+
+    /* 5. Печать 9 ячеек — 8.5 сек */
+    var cellsOrder = ['c-1', 'c-4', 'c-7', 'c-2', 'c-5', 'c-8', 'c-3', 'c-6', 'c-9'];
+    var perCell = Math.round(8500 / cellsOrder.length);
+    for (var ci2 = 0; ci2 < cellsOrder.length; ci2++) {
+      await typeMatrixCell(cellsOrder[ci2], perCell);
+    }
+
+    /* 6. Характер: показ + камера к стартовой позиции — 1.5 сек */
+    /* Секция сейчас пустая, только header. Ставим header на 30% экрана */
+    var rOnes = onesBlock.getBoundingClientRect();
+    var onesTopInStage = rOnes.top - getStageY();
+    var onesBottomInStage = rOnes.bottom - getStageY();
+    var onesInitialY = Math.min(
+      vh * 0.30 - onesTopInStage,
+      vh * 0.80 - onesBottomInStage
+    );
+    onesBlock.classList.add('visible');
+    await moveCameraTo(onesInitialY, 1500);
+
+    /* 7. Печать текста характера + follow-камера — 33.0 сек */
+    await typeCharacterWithFollow(structure, 33000);
+
+    /* 8. Финальная пауза — 1.5 сек */
+    await sleep(1500);
+
+    if (calcBtn) calcBtn.disabled = false;
+    inp.readOnly = false;
+    animationRunning = false;
+  }
+
+  /* ============================================================
+     ИНИЦИАЛИЗАЦИЯ
+     ============================================================ */
+  function initInput() {
+    var inp = document.getElementById('c-date');
+    if (!inp) return;
+    inp.addEventListener('input', function() {
+      if (animationRunning) return;
+      var v = this.value.replace(/[^0-9]/g, '');
+      var f = '';
+      if (v.length > 0) f += v.substring(0, 2);
+      if (v.length >= 3) f += '.' + v.substring(2, 4);
+      if (v.length >= 5) f += '.' + v.substring(4, 8);
+      this.value = f;
+    });
+    inp.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (!animationRunning) calculate();
+        return;
+      }
+      var allow = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
+      if (allow.indexOf(e.key) !== -1) return;
+      if (!/^[0-9]$/.test(e.key)) e.preventDefault();
+    });
+  }
+
+  function handleResize() {
+    if (animationRunning) return;
+    setInitialPosition();
+  }
+
+  function init() {
+    initInput();
+
+    var calcBtn = document.getElementById('c-calc-btn');
+    if (calcBtn) calcBtn.addEventListener('click', calculate);
+
+    var ready = (document.fonts && document.fonts.ready)
+      ? document.fonts.ready
+      : Promise.resolve();
+    ready.then(function() {
+      setTimeout(setInitialPosition, 80);
+    });
+    setTimeout(function() {
+      if (!initialized) setInitialPosition();
+    }, 900);
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', function() {
+      setTimeout(handleResize, 250);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
